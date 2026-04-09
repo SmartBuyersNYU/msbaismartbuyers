@@ -1,0 +1,162 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# ---------------------------------------
+# PAGE SETUP
+# ---------------------------------------
+
+st.set_page_config(
+    page_title="Amazon Smart Buyer Dashboard",
+    layout="wide"
+)
+
+st.title("Amazon Smart Buyer Dashboard")
+
+# ---------------------------------------
+# LOAD DATA
+# ---------------------------------------
+
+@st.cache_data
+def load_data():
+    df = pd.read_csv("data/amazon_master_dataset.csv")
+    return df
+
+df = load_data()
+
+# ---------------------------------------
+# SIDEBAR FILTERS
+# ---------------------------------------
+
+st.sidebar.header("Filters")
+
+brand_filter = st.sidebar.multiselect(
+    "Brand",
+    options=df["brand"].dropna().unique(),
+    default=df["brand"].dropna().unique()
+)
+
+subcategory_filter = st.sidebar.multiselect(
+    "Subcategory",
+    options=df["subcategory"].dropna().unique(),
+    default=df["subcategory"].dropna().unique()
+)
+
+quarter_filter = st.sidebar.multiselect(
+    "Quarter",
+    options=df["quarter"].dropna().unique(),
+    default=df["quarter"].dropna().unique()
+)
+
+filtered = df[
+    (df["brand"].isin(brand_filter)) &
+    (df["subcategory"].isin(subcategory_filter)) &
+    (df["quarter"].isin(quarter_filter))
+]
+
+# ---------------------------------------
+# KPI METRICS
+# ---------------------------------------
+
+st.subheader("Portfolio Overview")
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("Total Products", filtered["asin"].nunique())
+
+col2.metric(
+    "Average Margin %",
+    round(filtered["MarginPercent"].mean(),2)
+)
+
+col3.metric(
+    "Avg Competition Score",
+    round(filtered["CII_Score"].mean(),2)
+)
+
+col4.metric(
+    "Avg Buy Box Price",
+    round(filtered["buy_box_current"].mean(),2)
+)
+
+# ---------------------------------------
+# COMPETITION HEATMAP
+# ---------------------------------------
+
+st.subheader("Competitive Intensity by Subcategory")
+
+heatmap = px.density_heatmap(
+    filtered,
+    x="quarter",
+    y="subcategory",
+    z="CII_Score",
+    histfunc="avg"
+)
+
+st.plotly_chart(heatmap, use_container_width=True)
+
+# ---------------------------------------
+# DEMAND DISTRIBUTION
+# ---------------------------------------
+
+st.subheader("Demand Tier Distribution")
+
+demand_chart = px.histogram(
+    filtered,
+    x="Demand_Tier"
+)
+
+st.plotly_chart(demand_chart, use_container_width=True)
+
+# ---------------------------------------
+# MARGIN DISTRIBUTION
+# ---------------------------------------
+
+st.subheader("Margin Distribution")
+
+margin_chart = px.histogram(
+    filtered,
+    x="MarginPercent",
+    nbins=40
+)
+
+st.plotly_chart(margin_chart, use_container_width=True)
+
+# ---------------------------------------
+# MOMENTUM VS COMPETITION
+# ---------------------------------------
+
+st.subheader("Category Momentum vs Competition")
+
+scatter = px.scatter(
+    filtered,
+    x="CII_Score",
+    y="CategoryMomentum",
+    size="MarginPercent",
+    color="Demand_Tier",
+    hover_data=["asin","brand","subcategory"]
+)
+
+st.plotly_chart(scatter, use_container_width=True)
+
+# ---------------------------------------
+# PRODUCT TABLE
+# ---------------------------------------
+
+st.subheader("Product Explorer")
+
+st.dataframe(
+    filtered[
+        [
+            "asin",
+            "title",
+            "brand",
+            "subcategory",
+            "buy_box_current",
+            "MarginPercent",
+            "CII_Score",
+            "Demand_Tier"
+        ]
+    ],
+    use_container_width=True
+)
