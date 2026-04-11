@@ -112,8 +112,8 @@ def load_data():
             st.error(
                 f"Could not find **{fname}**.\n\n"
                 "Make sure the CSV files are either:\n"
-                "- In the same folder as `dashboard.py`, or\n"
-                "- In a `data/` subfolder next to `dashboard.py`"
+                "- In the same folder as `app.py`, or\n"
+                "- In a `data/` subfolder next to `app.py`"
             )
             st.stop()
     return dfs["cii"], dfs["oos"], dfs["pm"]
