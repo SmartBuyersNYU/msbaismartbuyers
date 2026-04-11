@@ -7,7 +7,7 @@ Streamlit app showcasing three model outputs:
   3. Price Momentum Final Model
 
 Run with:
-    streamlit run dashboard.py
+    streamlit run app.py
 """
 
 import streamlit as st
