@@ -88,8 +88,14 @@ st.markdown(
 # ── Data loading ──────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    # Allow running from any working directory by searching common locations
-    search_dirs = [".", os.path.dirname(__file__) if "__file__" in dir() else "."]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Search the script directory AND a data/ subfolder inside it
+    search_dirs = [
+        script_dir,
+        os.path.join(script_dir, "data"),
+        ".",
+        os.path.join(".", "data"),
+    ]
     files = {
         "cii": "CII_2026_Final_Model.csv",
         "oos": "OOS_Elasticity_Final_Model.csv",
@@ -104,8 +110,10 @@ def load_data():
                 break
         if key not in dfs:
             st.error(
-                f"Could not find **{fname}**. "
-                "Place all three CSV files in the same directory as this script and rerun."
+                f"Could not find **{fname}**.\n\n"
+                "Make sure the CSV files are either:\n"
+                "- In the same folder as `dashboard.py`, or\n"
+                "- In a `data/` subfolder next to `dashboard.py`"
             )
             st.stop()
     return dfs["cii"], dfs["oos"], dfs["pm"]
