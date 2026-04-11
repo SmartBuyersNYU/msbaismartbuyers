@@ -7,7 +7,7 @@ Streamlit app showcasing three model outputs:
   3. Price Momentum Final Model
 
 Run with:
-    streamlit run app.py
+    streamlit run dashboard.py
 """
 
 import streamlit as st
@@ -89,12 +89,12 @@ st.markdown(
 @st.cache_data
 def load_data():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Search the script directory AND a data/ subfolder inside it
+    cwd = os.getcwd()
     search_dirs = [
-        script_dir,
         os.path.join(script_dir, "data"),
-        ".",
-        os.path.join(".", "data"),
+        script_dir,
+        os.path.join(cwd, "data"),
+        cwd,
     ]
     files = {
         "cii": "CII_2026_Final_Model.csv",
@@ -104,20 +104,20 @@ def load_data():
     dfs = {}
     for key, fname in files.items():
         for d in search_dirs:
-            path = os.path.join(d, fname)
-            if os.path.exists(path):
-                dfs[key] = pd.read_csv(path)
+            fpath = os.path.join(d, fname)
+            if os.path.exists(fpath):
+                dfs[key] = pd.read_csv(fpath)
                 break
-        if key not in dfs:
-            st.error(
-                f"Could not find **{fname}**.\n\n"
-                "Make sure the CSV files are either:\n"
-                "- In the same folder as `app.py`, or\n"
-                "- In a `data/` subfolder next to `app.py`"
-            )
-            st.stop()
+    missing = [files[k] for k in files if k not in dfs]
+    if missing:
+        st.error(f"Could not find: **{', '.join(missing)}**")
+        st.info(
+            f"**Script dir:** `{script_dir}`  \n"
+            f"**CWD:** `{cwd}`  \n"
+            f"**Searched:** {search_dirs}"
+        )
+        st.stop()
     return dfs["cii"], dfs["oos"], dfs["pm"]
-
 
 df_cii, df_oos, df_pm = load_data()
 
